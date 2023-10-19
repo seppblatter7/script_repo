@@ -1,8 +1,8 @@
 import argparse
-from email.mime import image
 import os
 import cv2 as cv
 import torch
+from torchvision import transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 import tkinter as tk
@@ -30,8 +30,9 @@ def load_model(model_name):
     type(model)
     return model
 
-def detect_objects(model, input_path, output_folder, save_txt, save_crop, square_crop, conf = 0.5):
-    def process_image(frame, frame_pil, model, save_txt, frame_count, save_crop, square_crop, image_file = None):
+def detect_objects(model, input_path, output_folder, save_txt, frame_ratio, square_crop, save_crop, conf = 0.5):
+
+    def process_image(frame, frame_pil, model, save_txt, frame_count, frame_ratio, square_crop, save_crop, image_file = None):
         # Perform object detection
         results = model(frame_pil)
 
@@ -53,13 +54,13 @@ def detect_objects(model, input_path, output_folder, save_txt, save_crop, square
                 
                 confidence = "{:.2f}".format(det[4].item())
                 
-                # Extract bounding box coordinates
+                # Extract bounding box coordinates from xMin[0], yMin[1], xMax[2], yMax[3]
                 x_center = (bbox[0] + bbox[2]) / 2 
                 y_center = (bbox[1] + bbox[3]) / 2
-                width = (bbox[2] - bbox[0])  
-                height = (bbox[3] - bbox[1]) 
+                width = (bbox[2] - bbox[0])        
+                height = (bbox[3] - bbox[1])       
 
-                 # Convert bounding box to square if requested
+                # Convert bounding box to square if requested
                 if square_crop:
                     size = max(width, height)
                     x_center = (bbox[0] + bbox[2]) / 2
@@ -97,6 +98,8 @@ def detect_objects(model, input_path, output_folder, save_txt, save_crop, square
                     # Save the cropped image
                     output_path = os.path.join(class_folder, f'{frame_count}_{current_timestamp}.jpg')
                     cv.imwrite(output_path, cropped_image)
+                            
+
 
 
                 x1, y1, x2, y2 = map(int, bbox)
@@ -115,107 +118,136 @@ def detect_objects(model, input_path, output_folder, save_txt, save_crop, square
                 cv.putText(frame, label, (x1, y1 - 10),
                            cv.FONT_HERSHEY_SIMPLEX, 0.4, generate_color(obj_bbox_name), 1)
 
+
         if save_txt:
-            current_timestamp = int(time.time())
-            # Create the labels folder
-            labels_folder = os.path.join(output_folder, 'labels')
-            os.makedirs(labels_folder, exist_ok=True)
-            images_folder = os.path.join(output_folder, 'images')
-            os.makedirs(images_folder, exist_ok=True)
+            if frame_count % frame_ratio == 0:
+                current_timestamp = int(time.time())
+                # Create the labels folder
+                labels_folder = os.path.join(output_folder, 'labels')
+                os.makedirs(labels_folder, exist_ok=True)
+                images_folder = os.path.join(output_folder, 'images')
+                os.makedirs(images_folder, exist_ok=True)
 
-            output_image_file = os.path.join(images_folder, f'{frame_count}_{current_timestamp}.jpg')
+                output_image_file = os.path.join(images_folder, f'{frame_count}_{current_timestamp}.jpg')
 
-            if image_file == None:
-                output_labels_file = os.path.join(labels_folder, f'{frame_count}_{current_timestamp}.txt')
-            else:
-                output_labels_file = os.path.join(labels_folder ,(image_file + ".txt"))
+                if image_file == None:
+                    output_labels_file = os.path.join(labels_folder, f'{frame_count}_{current_timestamp}.txt')
+                else:
+                    output_labels_file = os.path.join(labels_folder ,(image_file + ".txt"))
 
-            print(output_labels_file)
-            with open(output_labels_file, 'w') as file:
-                for prediction in predictions:
-                    file.write(f'{prediction}\n')
-            cv.imwrite(output_image_file, frame)
+                print(output_labels_file)
+                with open(output_labels_file, 'w') as file:
+                    for prediction in predictions:
+                        file.write(f'{prediction}\n')
+                cv.imwrite(output_image_file, orig_frame)
+                
 
         return frame
-    
-    #image_file = input_path
-    
-    # Create the output folder if it doesn't exist
-    os.makedirs(output_folder, exist_ok=True)
 
-    # Check if the input is a directory
-    if os.path.isdir(input_path):
-        print("Image")
-        # Get a list of image files in the directory
-        image_files = [os.path.join(input_path, file) for file in os.listdir(input_path) if file.endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
 
-        # Sort the image files
-        image_files.sort()
+    def process_video(cap, total_frames, video_writer):
+        frame_count = 0
+        prev_time = time.time()
 
-        # Get the total number of images
-        total_images = len(image_files)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        # Iterate over the image files
-        for i, image_file in enumerate(image_files):
-            print(f'Processing image {i + 1}/{total_images}: {image_file}')
+            # Calculate the processing time for the previous frame
+            curr_time = time.time()
+            processing_time = curr_time - prev_time
+            prev_time = curr_time
 
-            # Read the image
-            frame = cv.imread(image_file)
+            print(f"Processing ({frame_count}/{total_frames}) fps:", int(1 / processing_time))
 
             # Convert the frame to PIL Image
             frame_pil = Image.fromarray(cv.cvtColor(frame, cv.COLOR_BGR2RGB))
 
             # Process the frame
-            frame = process_image(frame, frame_pil, model, save_txt, 0, save_crop, square_crop, os.path.splitext(os.path.basename(image_file))[0])
-
-            output_path = os.path.join(output_folder, f'pred_{image_file}.jpg')
-            cv.imwrite(output_path, frame)
-    else:
-            print(f'Processing image {i + 1}/{total_images}: {image_file}')
-
-            # Read the image
-            frame = cv.imread(image_file)
-
-            # Convert the frame to PIL Image
-            frame_pil = Image.fromarray(cv.cvtColor(frame, cv.COLOR_BGR2RGB))
-
-            # Process the frame
-            frame = process_image(frame, frame_pil, model, save_txt, 0, os.path.splitext(os.path.basename(image_file))[0])
-
-            output_path = os.path.join(output_folder, f'pred_{image_file}.jpg')
-            cv.imwrite(output_path, frame)
+            frame = process_image(frame, frame_pil, model, save_txt, frame_count, frame_ratio, square_crop, save_crop,)
             
+            #frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)  # Convert from RGB to BGR
+            frame = cv.resize(frame, (1280, 720))
+            video_writer.write(frame)
 
-def writeFile (total_images, image_file, frame, frame_pil, model, save_txt, output_folder):
+            frame_count += 1
+    
+    def writeVideo(cap, output_folder, total_frames, file):
+        video_writer = None
+        output_fps = cap.get(cv.CAP_PROP_FPS)
+        fourcc = cv.VideoWriter_fourcc(*'mp4v')
+        outputVideopath = os.path.join(output_folder, 'editedVideo')
+        os.makedirs(outputVideopath, exist_ok=True)
+        output_path = os.path.join(outputVideopath, "out_" + os.path.basename(file))
+        video_writer = cv.VideoWriter(output_path, fourcc, output_fps, (1280, 720))
+        video_writer.set(cv.VIDEOWRITER_PROP_QUALITY, 50)
 
-    print(f'Processing image {i + 1}/{total_images}: {image_file}')
+        try:
+            # Process the video frames
+            process_video(cap, total_frames, video_writer)
 
-    # Read the image
-    frame = cv.imread(image_file)
+        except KeyboardInterrupt:
+            # Handle keyboard interrupt (Ctrl+C)
+            print('Keyboard interrupt detected. Saving video output...')
 
-    # Convert the frame to PIL Image
-    frame_pil = Image.fromarray(cv.cvtColor(frame, cv.COLOR_BGR2RGB))
-
-    # Process the frame
-    frame = process_image(frame, frame_pil, model, save_txt, 0, os.path.splitext(os.path.basename(image_file))[0])
-
-    output_path = os.path.join(output_folder, f'pred_{image_file}.jpg')
-    cv.imwrite(output_path, frame)
-
+        finally:
+            # Release the capture, close windows, and release the video writer
+            cap.release()
+            if video_writer is not None:
+                video_writer.release()
+                print("Video saved!")
+            #cv.destroyAllWindows()
 
 
+
+    if os.path.isdir(input_path):
+
+        #get a list of a video in the directory
+        video_files = [os.path.join(input_path, file) for file in os.listdir(input_path) if file.endswith(('.mp4'))]
+        print (video_files)
+
+        #Sort video files
+        video_files.sort()
+
+        total_videos = len (video_files)
+
+        for i, video_file in enumerate(video_files):
+
+            print(f'processing video {i + 1}/{total_videos}: {video_file}')
+
+            cap = cv.VideoCapture(video_file)
+
+            # Get total number of frames in the video
+            total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+
+            # Create the output folder if it doesn't 
+            os.makedirs(output_folder, exist_ok=True)   
+
+            writeVideo (cap, output_folder, total_frames, video_file)
+
+    else:
+        cap = cv.VideoCapture(input_path)
+
+        # Get total number of frames in the video
+        total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+
+        # Create the output folder if it doesn't 
+        os.makedirs(output_folder, exist_ok=True)   
+
+        writeVideo (cap, output_folder, total_frames, input_path)
 
 # Main function
 def main():
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='YOLOv5 Object Detection')
-    parser.add_argument('--input', '-i', type=str, help='Path to the input image-file/images-folder')
+    parser.add_argument('--input', '-i', type=str, help='Path to the input .mp4 file')
     parser.add_argument('--model', '-m', type=str, default='yolov5s.pt', help='Path to the model to use (yolov5s.pt, yolov5m.pt, yolov5l.pt)')
     parser.add_argument('--output_dir', '-od', type=str, default='output', help='Output folder path')
     parser.add_argument('--save_txt', '-st', action='store_true', help='Save txt for detected objects')
+    parser.add_argument('--frame_ratio', '-fr', type=int, default=1, help='Indicates that it saves a frame every "parameter_entered" (-frame_ratio)')
     parser.add_argument('--square_crop', '-sqc', action='store_true', default=False, help='Convert bounding boxes to square boxes and apply classification')
     parser.add_argument('--save_crop', '-scrop', action='store_true', help='Save cropped images after classification')
-
 
     args = parser.parse_args()
 
@@ -226,12 +258,13 @@ def main():
     square_crop = args.square_crop
     save_crop = args.save_crop
     print("save_crop ", save_crop)
+    frame_ratio = args.frame_ratio
 
      # Load the YOLOv5 model
     model = load_model(model_name)
 
     # Apply object detection
-    detect_objects(model, input_path, output_folder, save_txt, save_crop, square_crop)
+    detect_objects(model, input_path, output_folder, save_txt, frame_ratio, square_crop, save_crop)
 
 if __name__ == '__main__':
     main()
