@@ -26,18 +26,23 @@ def remove_matching_lines(folder_path, excluded_indices, merged_indices=None):  
             with open(file_path, 'w') as file:
                 file.writelines(updated_lines)
 
-# Crea il parser degli argomenti
-parser = argparse.ArgumentParser()
-parser.add_argument('--input', '-i', type=str, help='Path to the input folder')
-parser.add_argument('--excluded_indices', '-ex_i', type=int, nargs='+', help='Indices of classes to exclude')
-parser.add_argument('--merged_indices', '-mrg_i', type=int, nargs='+', help='Indices of classes to be merged into a single class')
+#Main function
+def Main(): 
+    # Crea il parser degli argomenti
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', '-i', type=str, help='Path to the input folder')
+    parser.add_argument('--excluded_indices', '-ex_i', type=int, nargs='+', help='Indices of classes to exclude')
+    parser.add_argument('--merged_indices', '-mrg_i', type=int, nargs='+', help='Indices of classes to be merged into a single class')
 
-# Parsa gli argomenti dalla linea di comando
-args = parser.parse_args()
+    # Parsa gli argomenti dalla linea di comando
+    args = parser.parse_args()
 
-# Esempio di utilizzo
-input_folder = args.input  # Ottieni il percorso della cartella di input
-excluded_indices = args.excluded_indices  # Ottieni la lista degli indici classe da escludere
-merged_indices = args.merged_indices  # Ottieni la lista degli indici classe da unire in un indice "madre"
+    # Esempio di utilizzo
+    input_folder = args.input  # Ottieni il percorso della cartella di input
+    excluded_indices = args.excluded_indices  # Ottieni la lista degli indici classe da escludere
+    merged_indices = args.merged_indices  # Ottieni la lista degli indici classe da unire in un indice "madre"
 
-remove_matching_lines(input_folder, excluded_indices, merged_indices)
+    remove_matching_lines(input_folder, excluded_indices, merged_indices)
+
+if __name__ == '__Main__':
+    Main()
