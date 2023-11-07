@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "Python: Current File",
             "type": "python",
@@ -12,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--input /home/gabriele/Desktop/stage_aitek/stage_aitek2023/lavoriVGG/crop" ]
+            "args": ["--rtsp_url rtsp://localhost:8554/mystream", "-m //wsl.localhost/Ubuntu-20.04/home/doffyboyz/models/yolov5n.pt"]
         }
     ]
 }

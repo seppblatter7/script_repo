@@ -9,11 +9,16 @@ def create_association_matrix(mother_indices, excluded_indices):
         num_classes = int(input(f"Inserisci il numero di classi da eliminare in favore della classe madre {mother_index}: "))
 
         for i in range(num_classes):
+            if excluded_indices == None:
+                excluded_indices = " "
+            if mother_indices == None:
+                mother_indices = " "    
+
             class_to_exclude = input(f"Inserisci la {i+1} classe da eliminare in favore della classe madre {mother_index}: ")
-            if class_to_exclude in excluded_indices or class_to_exclude in mother_indices or mother_indices in excluded_indices:
-                print(f"L'indice {class_to_exclude} è presente in excluded_indices o in mother_indices. Il programma verrà interrotto.")
-                raise SystemExit  # Interrompe il programma
-            elif any(element == class_to_exclude for element in excluded_indices) or any(element == class_to_exclude for element in mother_indices) or any(element == excluded_indices for element in mother_indices):
+            #if class_to_exclude in excluded_indices or class_to_exclude in mother_indices or mother_indices in excluded_indices:
+             #   print(f"L'indice {class_to_exclude} è presente in excluded_indices o in mother_indices. Il programma verrà interrotto.")
+              #  raise SystemExit  # Interrompe il programma
+            if any(element == class_to_exclude for element in excluded_indices) or any(element == class_to_exclude for element in mother_indices) or any(element == excluded_indices for element in mother_indices):
                 print(f"Almeno un elemento in class_to_exclude è uguale a un elemento in excluded_indices o in mother_indices. Il programma verrà interrotto.")
                 raise SystemExit  # Interrompe il programma
             else:
@@ -58,8 +63,8 @@ def Main():
     # Crea il parser degli argomenti
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', '-i', type=str, help='Path to the input folder')
-    parser.add_argument('--excluded_indices', '-ex_i', type=str, nargs='+', help='Indices of classes to exclude')
-    parser.add_argument('--mother_indices', '-mot_i', type=int, nargs='+', help='Indices of mother classes')
+    parser.add_argument('--excluded_indices', '-ex_i', type=str, nargs='+', help='Indices of classes that will be erased with the entire line associated')
+    parser.add_argument('--mother_indices', '-mot_i', type=int, nargs='+', help='Indices of mother classes that will replace the classes we do not want to remove but just transform. The program will ask you for every mother index entered how many class index you want to remove and based on this let you insert the indices')
 
     # Parsa gli argomenti dalla linea di comando
     args = parser.parse_args()
