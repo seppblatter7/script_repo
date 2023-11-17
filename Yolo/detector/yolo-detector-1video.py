@@ -178,7 +178,7 @@ def main():
     parser.add_argument('--input', '-i', type=str, help='Path to the input .mp4 file')
     parser.add_argument('--model', '-m', type=str, default='yolov5s.pt', help='Path to the model to use (yolov5s.pt, yolov5m.pt, yolov5l.pt)')
     parser.add_argument('--output_dir', '-od', type=str, default='output', help='Output folder path')
-    parser.add_argument('--save_txt', '-st', action='store_true', help='Save txt for detected objects')
+    parser.add_argument('--save_txt', '-st', action='store_true', help='Save txt and realtive images for detected objects')
     parser.add_argument('--frame_ratio', '-fr', type=int, default=1, help='Indicates that it saves a frame every "parameter_entered" (-frame_ratio)')
 
 

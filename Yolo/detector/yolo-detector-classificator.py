@@ -11,7 +11,6 @@ import time
 import numpy as np
 import torch.nn.functional as F
 import random
-import string
 
 
 def generate_color(class_name):
