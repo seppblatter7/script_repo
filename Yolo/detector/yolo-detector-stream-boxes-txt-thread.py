@@ -21,7 +21,7 @@ def poll_rateF(input):
         print("mp4")
         cap = cv2.VideoCapture(input, cv2.CAP_FFMPEG)
         fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_queue_size = 10000
+        frame_queue_size = 3000
         pr = fps + 10
     else:
         print("Formato di input non valido")

@@ -64,7 +64,7 @@ def Main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', '-i', type=str, help='Path to the input folder')
     parser.add_argument('--excluded_indices', '-ex_i', type=str, nargs='+', help='Indices of classes that will be erased with the entire line associated')
-    parser.add_argument('--mother_indices', '-mot_i', type=int, nargs='+', help='Indices of mother classes that will replace the classes we do not want to remove but just transform. The program will ask you for every mother index entered how many class index you want to remove and based on this let you insert the indices')
+    parser.add_argument('--mother_indices', '-mot_i', type=int, nargs='+', help='Indices of mother classes that will replace the classes we do not want to remove but just transform. The program will ask you for every mother index entered how many class index you want to remove then based on this let you insert the indices')
 
     args = parser.parse_args()
 

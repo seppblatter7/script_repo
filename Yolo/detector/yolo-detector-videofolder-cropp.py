@@ -33,94 +33,93 @@ def load_model(model_name):
 def detect_objects(model, input_path, output_folder, save_txt, frame_ratio, square_crop, save_crop, conf = 0.5):
 
     def process_image(frame, frame_pil, model, save_txt, frame_count, frame_ratio, square_crop, save_crop, image_file = None):
-        # Perform object detection
-        results = model(frame_pil)
 
-        predictions = []
+        if frame_count % frame_ratio == 0:
 
-        orig_frame = np.copy(frame)
+            # Perform object detection
+            results = model(frame_pil)
 
-        # Parse the results and draw bounding boxes
-        for result in results.pred:
-            for i, det in enumerate(result):
-                class_index = int(det[5])
+            predictions = []
 
-                obj_bbox_name = model.names[class_index]
+            orig_frame = np.copy(frame)
 
-                bbox = det[:4].tolist()
-                
-                if det[4].item() < conf:
-                    continue
-                
-                confidence = "{:.2f}".format(det[4].item())
-                
-                # Extract bounding box coordinates from xMin[0], yMin[1], xMax[2], yMax[3]
-                x_center = (bbox[0] + bbox[2]) / 2 
-                y_center = (bbox[1] + bbox[3]) / 2
-                width = (bbox[2] - bbox[0])        
-                height = (bbox[3] - bbox[1])       
+            # Parse the results and draw bounding boxes
+            for result in results.pred:
+                for i, det in enumerate(result):
+                    class_index = int(det[5])
 
-                # Convert bounding box to square if requested
-                if square_crop:
-                    size = max(width, height)
-                    x_center = (bbox[0] + bbox[2]) / 2
-                    y_center = (bbox[1] + bbox[3]) / 2
-                    bboxSq = [
-                        x_center - size / 2,
-                        y_center - size / 2,
-                        x_center + size / 2,
-                        y_center + size / 2,
-                    ]
-                    # Ensure the square crop stays within image boundaries
-                    bbox = [
-                        max(0, bbox[0]),
-                        max(0, bbox[1]),
-                        min(frame.shape[1], bbox[2]),
-                        min(frame.shape[0], bbox[3]),
-                    ]
+                    obj_bbox_name = model.names[class_index]
 
-                if save_crop:
-                    if square_crop:
-                        cropped_image = orig_frame[int(bboxSq[1]):int(bboxSq[3]), int(bboxSq[0]):int(bboxSq[2])]
-                    else:
-                        cropped_image = orig_frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
-
-                    # Check if the cropped image is empty
-                    if cropped_image.size == 0:
+                    bbox = det[:4].tolist()
+                    
+                    if det[4].item() < conf:
                         continue
-                
-                    # Create class folder if it doesn't exist
-                    class_folder = os.path.join(output_folder, str(class_index))
-                    os.makedirs(class_folder, exist_ok=True) 
+                    
+                    confidence = "{:.2f}".format(det[4].item())
+                    
+                    # Extract bounding box coordinates from xMin[0], yMin[1], xMax[2], yMax[3]
+                    x_center = (bbox[0] + bbox[2]) / 2 
+                    y_center = (bbox[1] + bbox[3]) / 2
+                    width = (bbox[2] - bbox[0])        
+                    height = (bbox[3] - bbox[1])       
 
-                    current_timestamp = int(time.time())
+                    # Convert bounding box to square if requested
+                    if square_crop:
+                        size = max(width, height)
+                        x_center = (bbox[0] + bbox[2]) / 2
+                        y_center = (bbox[1] + bbox[3]) / 2
+                        bboxSq = [
+                            x_center - size / 2,
+                            y_center - size / 2,
+                            x_center + size / 2,
+                            y_center + size / 2,
+                        ]
+                        # Ensure the square crop stays within image boundaries
+                        bbox = [
+                            max(0, bbox[0]),
+                            max(0, bbox[1]),
+                            min(frame.shape[1], bbox[2]),
+                            min(frame.shape[0], bbox[3]),
+                        ]
 
-                    # Save the cropped image
-                    output_path = os.path.join(class_folder, f'{frame_count}_{current_timestamp}.jpg')
-                    cv.imwrite(output_path, cropped_image)
-                            
+                    if save_crop:
+                        if square_crop:
+                            cropped_image = orig_frame[int(bboxSq[1]):int(bboxSq[3]), int(bboxSq[0]):int(bboxSq[2])]
+                        else:
+                            cropped_image = orig_frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
+
+                        # Check if the cropped image is empty
+                        if cropped_image.size == 0:
+                            continue
+                    
+                        # Create class folder if it doesn't exist
+                        class_folder = os.path.join(output_folder, str(class_index))
+                        os.makedirs(class_folder, exist_ok=True) 
+
+                        current_timestamp = int(time.time())
+
+                        # Save the cropped image
+                        output_path = os.path.join(class_folder, f'{frame_count}_{current_timestamp}.jpg')
+                        cv.imwrite(output_path, cropped_image)
+
+                    x1, y1, x2, y2 = map(int, bbox)
+
+                    label_txt = f"{class_index} {x_center/frame.shape[1]} {y_center/frame.shape[0]} {width/frame.shape[1]} {height/frame.shape[0]}"
+
+                    label = obj_bbox_name + f" ({confidence})"
+
+                    predictions.append(label_txt)
+
+                    # Draw bounding box and confidence with the label
+                    text_size, _ = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.4, 1)
+                    text_width, text_height = text_size[0], text_size[1]
+                    cv.rectangle(frame, (x1, y1 - text_height - 11), (x1 + text_width, y1 - 8), (255, 255, 255), cv.FILLED)
+                    cv.rectangle(frame, (x1, y1), (x2, y2), generate_color(obj_bbox_name), 2)
+                    cv.putText(frame, label, (x1, y1 - 10),
+                            cv.FONT_HERSHEY_SIMPLEX, 0.4, generate_color(obj_bbox_name), 1)
 
 
-
-                x1, y1, x2, y2 = map(int, bbox)
-
-                label_txt = f"{class_index} {x_center/frame.shape[1]} {y_center/frame.shape[0]} {width/frame.shape[1]} {height/frame.shape[0]}"
-
-                label = obj_bbox_name + f" ({confidence})"
-
-                predictions.append(label_txt)
-
-                # Draw bounding box and confidence with the label
-                text_size, _ = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.4, 1)
-                text_width, text_height = text_size[0], text_size[1]
-                cv.rectangle(frame, (x1, y1 - text_height - 11), (x1 + text_width, y1 - 8), (255, 255, 255), cv.FILLED)
-                cv.rectangle(frame, (x1, y1), (x2, y2), generate_color(obj_bbox_name), 2)
-                cv.putText(frame, label, (x1, y1 - 10),
-                           cv.FONT_HERSHEY_SIMPLEX, 0.4, generate_color(obj_bbox_name), 1)
-
-
-        if save_txt:
-            if frame_count % frame_ratio == 0:
+            if save_txt:
                 current_timestamp = int(time.time())
                 # Create the labels folder
                 labels_folder = os.path.join(output_folder, 'labels')
@@ -140,7 +139,7 @@ def detect_objects(model, input_path, output_folder, save_txt, frame_ratio, squa
                     for prediction in predictions:
                         file.write(f'{prediction}\n')
                 cv.imwrite(output_image_file, orig_frame)
-                
+                    
 
         return frame
 
