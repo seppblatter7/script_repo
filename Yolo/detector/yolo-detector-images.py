@@ -120,21 +120,20 @@ def detect_objects(model, input_path, output_folder, save_txt, save_crop, square
             # Create the labels folder
             labels_folder = os.path.join(output_folder, 'labels')
             os.makedirs(labels_folder, exist_ok=True)
-            images_folder = os.path.join(output_folder, 'images')
-            os.makedirs(images_folder, exist_ok=True)
+            """images_folder = os.path.join(output_folder, 'images')
+            os.makedirs(images_folder, exist_ok=True)"""
 
-            output_image_file = os.path.join(images_folder, f'{frame_count}_{current_timestamp}.jpg')
+            #output_image_file = os.path.join(images_folder, f'{frame_count}_{current_timestamp}.jpg')
 
             if image_file == None:
                 output_labels_file = os.path.join(labels_folder, f'{frame_count}_{current_timestamp}.txt')
             else:
                 output_labels_file = os.path.join(labels_folder ,(image_file + ".txt"))
 
-            print(output_labels_file)
             with open(output_labels_file, 'w') as file:
                 for prediction in predictions:
                     file.write(f'{prediction}\n')
-            cv.imwrite(output_image_file, frame)
+            #cv.imwrite(output_image_file, frame)
 
         return frame
     

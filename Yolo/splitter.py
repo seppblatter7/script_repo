@@ -30,7 +30,7 @@ def split_data_folder(input_folder):
         print(f"Errore: il numero di file nelle cartelle 'images' e 'labels' non corrisponde \n labels:{num_labels} \n images:{num_images}")
         return
 
-    nomiCartelle = ["train", "test", "val"]
+    nomiCartelle = ["train", "test", "valid"]
 
     for i in nomiCartelle:
         
@@ -62,13 +62,16 @@ def split_data_folder(input_folder):
             s = change_extension(i, ".txt")
 
             #sposta in val immagine e relativa label
-            shutil.move(os.path.join(images_folder, i), os.path.join(input_folder, "val", "images", i))
-            shutil.move(os.path.join(labels_folder, s), os.path.join(input_folder, "val", "labels", s))
+            shutil.move(os.path.join(images_folder, i), os.path.join(input_folder, "valid", "images", i))
+            shutil.move(os.path.join(labels_folder, s), os.path.join(input_folder, "valid", "labels", s))
+
+    os.rmdir (images_folder)
+    os.rmdir (labels_folder)
 
 # Main function
 def main():
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description='splitter into train, test e val')
+    parser = argparse.ArgumentParser(description='splitter into train, test e valid')
     parser.add_argument('--input', '-i', type=str, help='Path to the input folder')
 
     args = parser.parse_args()

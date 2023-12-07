@@ -167,10 +167,6 @@ def detect_objects(model, input_path, output_folder, save_txt, frame_ratio, conf
             print("Video saved!")
         #cv.destroyAllWindows()
 
-
-  
-
-
 # Main function
 def main():
     # Parse command-line arguments

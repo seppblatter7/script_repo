@@ -27,38 +27,53 @@ def create_association_matrix(mother_indices, excluded_indices):
     return association_matrix
 
 def process_files(input_folder, excluded_indices, association_matrix):
-
+    # Ottieni la lista di tutti i file .txt nella cartella specificata
     txt_files = [f for f in os.listdir(input_folder) if f.endswith(".txt")]
 
+    # Itera su ogni file .txt trovato
     for file_name in txt_files:
+        # Costruisci il percorso completo del file
         file_path = os.path.join(input_folder, file_name)
 
+        # Apri il file in modalità lettura
         with open(file_path, "r") as file:
+            # Leggi tutte le linee del file
             lines = file.readlines()
 
+        # Inizializza una lista per contenere le linee modificate
         modified_lines = []
 
+        # Itera su ogni linea del file
         for line in lines:
+            # Estrai il nome della classe dalla prima parola della linea
             class_name = line.split()[0]
 
+            # Inizializza la variabile per la linea modificata
             modified_line = None
 
+            # Se la lista di indici esclusi non è vuota e la classe è presente nella lista, continua con la prossima iterazione
             if excluded_indices and class_name in excluded_indices:
                 continue
 
+            # Itera su ogni riga della matrice di associazione
             for row in association_matrix:
+                # Se la classe è presente nelle colonne successive della riga
                 if class_name in map(str, row[1:]):
                     # Sostituisci solo il primo elemento della riga con l'elemento della classe madre
                     modified_line = "{} {}".format(row[0], line.split(' ', 1)[1])
                     break
 
+            # Se la linea non è stata modificata, assegna la linea originale
             if modified_line is None:
                 modified_line = line
 
+            # Aggiungi la linea modificata o originale alla lista delle linee modificate
             modified_lines.append(modified_line)
 
+        # Apri il file in modalità scrittura sovrascrivendo il suo contenuto con le linee modificate
         with open(file_path, "w") as file:
             file.writelines(modified_lines)
+
 
 def Main():
     parser = argparse.ArgumentParser()
