@@ -49,6 +49,7 @@ def yolo2vgg(yolo_labels, im_w, im_h):
 def create_json(images_dir, labels_dir, annotations_file, project_file):
     annotations = {}
     image_files = list(images_dir.glob('*.jpg'))
+    print(image_files)
     if not image_files:
         print(f'No images found in {images_dir.absolute()}')
         exit(0)
