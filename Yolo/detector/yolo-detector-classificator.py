@@ -55,11 +55,12 @@ def display_image(frame, interval = 0):
 
 # +
 
-def load_model(model_name, device):
+def load_model(model_name, device, conf):
     # Load the YOLOv5 model
     model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
     model.eval()
     model.to(device)
+    model.conf = conf
     print("Detection model classes: ")
     print(model.names)
     return model
@@ -84,7 +85,7 @@ def load_labels(labels_path):
         labels = file.read().splitlines()
     return labels
 
-def ResizeAndPad(img, size = (640, 640), padColor=0):
+def ResizeAndPad(img, size = (1280, 1280), padColor=0):
     w, h = img.size 
     #h, w = img.shape[:2]
     sh, sw = size
@@ -378,7 +379,7 @@ def main():
     device = torch.device(device)
 
     # Load the YOLOv5 model
-    model = load_model(model_name, device)
+    model = load_model(model_name, device, conf)
 
 
     # Load the classification model if apply_classification is True
